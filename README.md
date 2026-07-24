@@ -8,8 +8,8 @@ Built for the **Digital Heroes Software Development Internship Task**.
 
 ## 🚀 Live Demo & Links
 
-- **Live Web App:** [https://page-pulse.onrender.com](https://page-pulse.onrender.com) *(Update with your actual Render URL)*
-- **GitHub Repository:** [https://github.com/yourusername/page-pulse](https://github.com/yourusername/page-pulse) *(Update with your actual GitHub URL)*
+- **Live Web App:** [https://page-pulse-7vnv.onrender.com](https://page-pulse-7vnv.onrender.com) *(Update with your actual Render URL)*
+- **GitHub Repository:** [https://github.com/Meghnath81/page-pulse](https://github.com/Meghnath81/page-pulse) *(Update with your actual GitHub URL)*
 
 ---
 
