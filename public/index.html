@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page Pulse - Web Page Auditor</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 750px; margin: 40px auto; padding: 0 20px; line-height: 1.5; color: #333; }
+    .search-box { display: flex; gap: 10px; margin-bottom: 25px; }
+    input { flex: 1; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+    button { padding: 12px 20px; font-size: 16px; cursor: pointer; background-color: #0070f3; color: white; border: none; border-radius: 6px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+    button:disabled { background-color: #a0c7ff; cursor: not-allowed; }
+    
+    .card { border: 1px solid #e2e8f0; padding: 24px; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-top: 20px; }
+    .metric-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .metric-row:last-child { border-bottom: none; }
+    
+    .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px; }
+    .fast { background-color: #d1fae5; color: #065f46; }
+    .avg { background-color: #fef3c7; color: #92400e; }
+    .slow { background-color: #fee2e2; color: #991b1b; }
+
+    .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    footer { margin-top: 60px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-size: 14px; color: #666; }
+    a { color: #0070f3; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ Page Pulse Audit Tool</h1>
+  <p>Analyze web page performance, SEO, and structural integrity in seconds.</p>
+
+  <div class="search-box">
+    <input type="url" id="urlInput" placeholder="https://example.com" required />
+    <button id="auditBtn" onclick="runAudit()">Audit URL</button>
+  </div>
+
+  <div id="results"></div>
+
+  <!-- MANDATORY FOOTER REQUIREMENT -->
+  <footer>
+    <p>Built for Digital Heroes Training Task | <a href="https://digitalheroesco.com" target="_blank">digitalheroesco.com</a></p>
+  </footer>
+
+  <script>
+    // Helper to prevent XSS
+    // FIXED HELPER: Safely handles numeric 0 without returning an empty string
+    function escapeHtml(str) {
+    if (str === null || str === undefined) {
+    return '';
+    }
+    return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+    }
+
+    async function runAudit() {
+      const urlInput = document.getElementById('urlInput').value.trim();
+      const resultsDiv = document.getElementById('results');
+      const auditBtn = document.getElementById('auditBtn');
+
+      if (!urlInput) {
+        resultsDiv.innerHTML = '<p style="color:red">Please enter a valid URL including http:// or https://</p>';
+        return;
+      }
+
+      auditBtn.disabled = true;
+      auditBtn.innerHTML = '<span class="spinner"></span> Auditing...';
+      resultsDiv.innerHTML = '<p>Analyzing site metrics...</p>';
+
+      try {
+        const res = await fetch(`/api/audit?url=${encodeURIComponent(urlInput)}`);
+        const result = await res.json();
+
+        if (!res.ok || !result.success) {
+          resultsDiv.innerHTML = `<p style="color:red; font-weight:bold;">Error (${res.status}): ${escapeHtml(result.error)}</p>`;
+          return;
+        }
+
+        const data = result.data;
+
+        let speedClass = 'fast';
+        let speedLabel = '🟢 Fast';
+        if (data.responseTimeMs > 1000) {
+          speedClass = 'slow';
+          speedLabel = '🔴 Slow';
+        } else if (data.responseTimeMs > 300) {
+          speedClass = 'avg';
+          speedLabel = '🟡 Average';
+        }
+
+        resultsDiv.innerHTML = `
+          <div class="card">
+            <h2>Audit Report</h2>
+            <div class="metric-row"><span><strong>HTTP Status:</strong></span> <span>${escapeHtml(data.status)}</span></div>
+            <div class="metric-row">
+              <span><strong>Response Time:</strong></span> 
+              <span>${escapeHtml(data.responseTimeMs)} ms <span class="badge ${speedClass}">${speedLabel}</span></span>
+            </div>
+            <div class="metric-row"><span><strong>Title:</strong></span> <span>${escapeHtml(data.title)}</span></div>
+            <div class="metric-row"><span><strong>Meta Description:</strong></span> <span>${escapeHtml(data.metaDescription)}</span></div>
+            <div class="metric-row"><span><strong>H1 Tag Count:</strong></span> <span>${escapeHtml(data.h1Count)}</span></div>
+            <div class="metric-row">
+            <span><strong>Images Missing/Empty Alt:</strong></span> 
+            <span>${data.imagesMissingAlt !== undefined ? escapeHtml(data.imagesMissingAlt) : '0'}</span>
+            </div>
+            <div class="metric-row"><span><strong>Approx Word Count:</strong></span> <span>${escapeHtml(data.wordCount)} words</span></div>
+          </div>
+        `;
+      } catch (e) {
+        resultsDiv.innerHTML = `<p style="color:red">Failed to communicate with server.</p>`;
+      } finally {
+        auditBtn.disabled = false;
+        auditBtn.innerHTML = 'Audit URL';
+      }
+    }
+  </script>
+</body>
+</html>
